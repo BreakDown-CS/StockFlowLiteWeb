@@ -16,6 +16,8 @@ export const queryKeys = {
   requests: (query: Record<string, unknown>) => ['requests', 'list', query] as const,
   request: (id: string) => ['requests', 'detail', id] as const,
 
+  requestReport: (query: Record<string, unknown>) => ['reports', 'requests', query] as const,
+
   inventoryReport: (query: Record<string, unknown>) => ['reports', 'inventory', query] as const,
   lowStock: (limit: number) =>
     ['reports', 'inventory', { lowStock: true, limit, offset: 0 }] as const,

@@ -140,9 +140,15 @@ export async function forward(
   }
 
   // 4. Response
-  if (upstream.status === 401) {
-    // Invalid, revoked, expired token or a deactivated account — indistinguishable by
-    // design, and handled the same way: drop the session and ask for a fresh login.
+  const parsed = tryParseJson(upstream.bodyText);
+  const upstreamCode =
+    parsed !== undefined && isEnvelopeLike(parsed) ? readErrorCode(parsed) : undefined;
+
+  // A 401 means "your session is gone" ONLY when the API says UNAUTHORIZED (the code its
+  // auth middleware returns for an invalid, revoked or expired token — or an inactive user).
+  // Other 401s — INVALID_CREDENTIALS from change-password — are a payload problem, and
+  // destroying the session there would log a user out for a typo.
+  if (upstream.status === 401 && (upstreamCode === undefined || upstreamCode === 'UNAUTHORIZED')) {
     const response = bffError(
       {
         status: 401,
@@ -156,7 +162,6 @@ export async function forward(
     return response;
   }
 
-  const parsed = tryParseJson(upstream.bodyText);
   if (parsed !== undefined && isEnvelopeLike(parsed)) {
     if (upstream.status >= 500) {
       logger.error('Upstream returned a server error', {

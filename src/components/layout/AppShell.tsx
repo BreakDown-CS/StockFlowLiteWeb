@@ -28,6 +28,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
+      {/* Keyboard users land here first; visible only when focused. */}
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       <Layout.Sider
         theme="light"
         width={240}
@@ -80,7 +84,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Space>
         </Layout.Header>
 
-        <Layout.Content style={{ padding: 24 }}>
+        <Layout.Content id="main-content" role="main" style={{ padding: 24 }} tabIndex={-1}>
           <Flex vertical gap={16} style={{ maxWidth: 1100, margin: '0 auto' }}>
             <SessionExpiryBanner expiresAt={expiresAt} />
             {children}

@@ -36,6 +36,7 @@ yarn-error.log*
 install*.log
 .tmp-*.bat
 .tmp-*.ps1
+.tmp-*.mjs
 /dev.log
 /api.log
 /int.log
@@ -44,7 +45,17 @@ install*.log
 /f3.log
 /f4.log
 /f5.log
+/f6.log
+/f7.log
+/f7b.log
 /smoke.log
 /wf.log
 /user-create.log
+/e2e.log
+/e2e2.log
+/e2e3.log
+/cov.log
+/cov2.log
+/e2e-install.log
 /login.html
+/nonce.txt

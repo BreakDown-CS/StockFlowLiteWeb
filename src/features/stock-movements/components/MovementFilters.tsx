@@ -1,9 +1,10 @@
 'use client';
 
-import { Button, DatePicker, Flex, Select, Typography } from 'antd';
+import { Button, DatePicker, Flex, Select, Space, Typography } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 
 import { ProductSelect } from '@/features/products/components/ProductSelect';
+import { resolveReportRange } from '@/lib/validation/report-range';
 
 import { MOVEMENT_TYPES, type MovementType } from '../types';
 import type { MovementListParams } from '../use-movement-params';
@@ -69,18 +70,29 @@ export function MovementFilters({
           }}
         />
 
-        <Button
-          onClick={() =>
-            onChange({
-              productId: undefined,
-              movementType: undefined,
-              from: undefined,
-              to: undefined,
-            })
-          }
-        >
-          Clear
-        </Button>
+        <Space size={8}>
+          <Button
+            onClick={() => {
+              const range = resolveReportRange({});
+              onChange({ from: range.from, to: range.to });
+            }}
+          >
+            Last 30 days
+          </Button>
+          <Button onClick={() => onChange({ from: undefined, to: undefined })}>All time</Button>
+          <Button
+            onClick={() =>
+              onChange({
+                productId: undefined,
+                movementType: undefined,
+                from: undefined,
+                to: undefined,
+              })
+            }
+          >
+            Clear
+          </Button>
+        </Space>
       </Flex>
 
       <Typography.Text type="secondary">

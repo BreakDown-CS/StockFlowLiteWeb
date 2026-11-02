@@ -21,3 +21,26 @@ body {
     sans-serif;
   background: #f5f6f8;
 }
+
+/* Visible only when focused: the first tab stop for keyboard users. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 8px;
+  z-index: 1000;
+  padding: 8px 12px;
+  background: #1677ff;
+  color: #ffffff;
+  border-radius: 4px;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  left: 16px;
+}
+
+/* Make the focus ring visible on every interactive element. */
+:focus-visible {
+  outline: 2px solid #1677ff;
+  outline-offset: 2px;
+}

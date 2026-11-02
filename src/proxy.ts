@@ -1,19 +1,19 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 /**
- * Presence-only session gate (Next.js 16 `proxy` convention, formerly `middleware`).
+ * Proxy (Next.js 16's `middleware`): session presence gate + Content-Security-Policy.
  *
- * IMPORTANT: this does NOT validate the session. It runs on the Edge runtime, where the
- * Node `crypto` module used by the session cipher is unavailable, so it deliberately
- * does not pretend to be a security control. Its only job is a cheap redirect so an
- * unauthenticated visitor sees the login page instead of a flash of the app shell.
+ * TWO separate jobs, on purpose:
  *
- * The real control is per-request: every BFF route decrypts the cookie, the (app)
- * layout re-checks it on the server, and the API validates the token on every call.
+ * 1. **Presence gate** — a cheap redirect for unauthenticated visitors. This is NOT a
+ *    security control: it runs on the Edge runtime, cannot decrypt the session, and can be
+ *    fooled by a stale cookie. Every BFF route still decrypts the cookie, the (app) layout
+ *    re-checks it on the server, and the API validates the token on every call.
  *
- * Both cookie names are checked because the `__Host-` prefix is only used when the
- * cookie is `Secure` (production). This file must not import the server-only env module,
- * which is unavailable at the edge.
+ * 2. **CSP** — a fresh nonce per document request. Next.js reads the nonce from this
+ *    header and stamps its own scripts with it; `strict-dynamic` then allows the chunks
+ *    those scripts load. `style-src` still needs `'unsafe-inline'` because Ant Design
+ *    injects its styles at runtime (CSS-in-JS) — a documented, deliberate trade-off.
  */
 
 const SESSION_COOKIE_CANDIDATES = ['__Host-sf_session', 'sf_session'] as const;
@@ -26,24 +26,63 @@ function isPublic(pathname: string): boolean {
   );
 }
 
+/** 128-bit random nonce, base64 — `crypto.getRandomValues` exists on the Edge runtime. */
+function createNonce(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  let binary = '';
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  return btoa(binary);
+}
+
+function contentSecurityPolicy(nonce: string): string {
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    // Ant Design injects <style> tags at runtime; a nonce cannot cover that.
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob:",
+    "font-src 'self' data:",
+    "connect-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+  ].join('; ');
+}
+
 export function proxy(request: NextRequest): NextResponse {
   const { pathname, search } = request.nextUrl;
+  const nonce = createNonce();
+  const csp = contentSecurityPolicy(nonce);
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-nonce', nonce);
+  // Next.js looks for the nonce in the request's CSP header and applies it to its scripts.
+  requestHeaders.set('Content-Security-Policy', csp);
+
+  function withCsp(response: NextResponse): NextResponse {
+    response.headers.set('Content-Security-Policy', csp);
+    return response;
+  }
 
   const hasSessionCookie = SESSION_COOKIE_CANDIDATES.some((name) => request.cookies.has(name));
   if (hasSessionCookie || isPublic(pathname)) {
-    return NextResponse.next();
+    return withCsp(NextResponse.next({ request: { headers: requestHeaders } }));
   }
 
   const loginUrl = new URL('/login', request.url);
   // Preserve the destination so the user lands where they intended after signing in.
   loginUrl.searchParams.set('next', `${pathname}${search}`);
-  return NextResponse.redirect(loginUrl);
+  return withCsp(NextResponse.redirect(loginUrl));
 }
 
 export const config = {
   /**
-   * Excludes API routes (they answer 401 themselves instead of redirecting) and static
-   * assets.
+   * Excludes API routes (they answer 401 themselves instead of redirecting, and JSON does
+   * not need a document CSP) and static assets.
    */
   matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };

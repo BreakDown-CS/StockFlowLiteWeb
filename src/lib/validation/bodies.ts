@@ -93,6 +93,14 @@ export const createReceiptBodySchema = z.object({
 
 export type CreateReceiptBody = z.infer<typeof createReceiptBodySchema>;
 
+/** Self-service password change. The API then revokes every session of the user. */
+export const changePasswordBodySchema = z.object({
+  current_password: z.string().min(1, 'Current password is required').max(1024),
+  new_password: z.string().min(1, 'New password is required').max(1024),
+});
+
+export type ChangePasswordBody = z.infer<typeof changePasswordBodySchema>;
+
 /**
  * Stock request bodies.
  *

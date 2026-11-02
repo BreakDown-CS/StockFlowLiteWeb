@@ -1,8 +1,15 @@
 import { bffRequest } from '@/lib/api/bff-client';
 import type { PageMeta } from '@/lib/api/envelope';
 
-import { toInventoryReport } from './mappers';
-import type { InventoryQuery, InventoryReport, InventoryReportDTO } from './types';
+import { toInventoryReport, toRequestReport } from './mappers';
+import type {
+  InventoryQuery,
+  InventoryReport,
+  InventoryReportDTO,
+  RequestReport,
+  RequestReportDTO,
+  RequestReportQuery,
+} from './types';
 
 /**
  * Report API calls.
@@ -49,6 +56,60 @@ export async function fetchInventoryReport(
 
   return {
     report: toInventoryReport(response.data),
+    meta: response.meta as PageMeta | undefined,
+  };
+}
+
+export type RequestReportResult = {
+  report: RequestReport;
+  meta?: PageMeta;
+};
+
+function toRequestParams(query: RequestReportQuery): URLSearchParams {
+  const params = new URLSearchParams();
+
+  if (query.status) {
+    params.set('status', query.status);
+  }
+  if (query.requesterId) {
+    params.set('requester_id', query.requesterId);
+  }
+  if (query.from) {
+    params.set('from', query.from);
+  }
+  if (query.to) {
+    params.set('to', query.to);
+  }
+  if (query.limit !== undefined) {
+    params.set('limit', String(query.limit));
+  }
+  if (query.offset !== undefined) {
+    params.set('offset', String(query.offset));
+  }
+
+  return params;
+}
+
+/**
+ * Request report.
+ *
+ * A REQUESTER is scoped to their own requests by the API regardless of `requester_id`,
+ * so the screen hides that filter for them instead of pretending it works.
+ */
+export async function fetchRequestReport(
+  query: RequestReportQuery = {},
+  signal?: AbortSignal,
+): Promise<RequestReportResult> {
+  const search = toRequestParams(query).toString();
+  const path =
+    search.length > 0
+      ? `/api/bff/reports/stock-requests?${search}`
+      : '/api/bff/reports/stock-requests';
+
+  const response = await bffRequest<RequestReportDTO>(path, { signal });
+
+  return {
+    report: toRequestReport(response.data),
     meta: response.meta as PageMeta | undefined,
   };
 }

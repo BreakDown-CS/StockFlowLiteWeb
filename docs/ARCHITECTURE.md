@@ -76,8 +76,8 @@ A mutation adds two steps before the upstream call: **Origin allowlist** and
 | F3 | Products | ✅ |
 | F4 | Stock receipts + movements | ✅ |
 | F5 | Stock requests + workflow (idempotent issue) | ✅ |
-| F6 | Reports (+ optional change password) | |
-| F7 | E2E suite, CSP, accessibility, docs polish | |
+| F6 | Reports (+ optional change password) | ✅ |
+| F7 | E2E suite, CSP, accessibility, docs polish | ✅ |
 
 See `docs/SECURITY.md` for the threat model and `docs/API-CONTRACT.md` for the verified
 backend contract.

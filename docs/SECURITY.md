@@ -83,10 +83,14 @@ Stated plainly, because a security section that only lists wins is not a securit
    fronts every login, the backend's `username|IP` key degenerates to a single key per username,
    which makes username-level lockout reachable by an attacker. The BFF limiter per client IP is
    the compensating control.
-7. **CSP is not shipped yet.** Phase F7 adds a nonce-based policy together with the Ant Design
-   registry integration, because antd injects runtime `<style>` tags and a naive CSP would either
-   break the app or be meaningless. Baseline headers (nosniff, DENY, no-referrer,
-   permissions-policy) are already set in `next.config.ts`.
+7. **`style-src` still allows inline styles.** The CSP ships a per-request nonce for scripts
+   (`script-src 'self' 'nonce-…' 'strict-dynamic'`), but Ant Design injects `<style>` tags at
+   runtime, so `style-src` needs `'unsafe-inline'`. That means CSS injection is still possible;
+   it cannot execute script, and `script-src` remains nonce-bound. A nonce for styles would
+   require threading it through `@ant-design/cssinjs`, which is not wired up yet.
+8. **No XSS-hunting beyond CSP.** Baseline headers (`nosniff`, `X-Frame-Options: DENY`,
+   `Referrer-Policy: no-referrer`, `Permissions-Policy`, `COOP`) are set in `next.config.ts`,
+   and the CSP in `src/proxy.ts`.
 
 ## 6. Deployment constraints
 

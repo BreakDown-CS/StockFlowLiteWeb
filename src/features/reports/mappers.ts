@@ -5,6 +5,12 @@ import type {
   InventoryRowDTO,
   InventorySummary,
   InventorySummaryDTO,
+  RequestReport,
+  RequestReportDTO,
+  RequestReportRow,
+  RequestReportRowDTO,
+  RequestSummary,
+  RequestSummaryDTO,
 } from './types';
 
 /** Pure DTO → view-model mappers (unit-tested; the only snake_case boundary). */
@@ -38,5 +44,43 @@ export function toInventoryReport(dto: InventoryReportDTO): InventoryReport {
   return {
     summary: toInventorySummary(dto.summary),
     items: dto.items.map(toInventoryItem),
+  };
+}
+
+export function toRequestReportRow(dto: RequestReportRowDTO): RequestReportRow {
+  return {
+    id: dto.id,
+    requestNumber: dto.request_number,
+    status: dto.status,
+    requesterId: dto.requester_id,
+    requesterUsername: dto.requester_username,
+    itemCount: dto.item_count,
+    requestedUnits: dto.requested_units,
+    issuedUnits: dto.issued_units,
+    createdAt: dto.created_at,
+    reviewedAt: dto.reviewed_at ?? null,
+    issuedAt: dto.issued_at ?? null,
+    rejectionReason: dto.rejection_reason ?? '',
+    cancellationReason: dto.cancellation_reason ?? '',
+  };
+}
+
+export function toRequestSummary(dto: RequestSummaryDTO): RequestSummary {
+  return {
+    totalRequests: dto.total_requests,
+    pendingRequests: dto.pending_requests,
+    approvedRequests: dto.approved_requests,
+    rejectedRequests: dto.rejected_requests,
+    issuedRequests: dto.issued_requests,
+    cancelledRequests: dto.cancelled_requests,
+    requestedUnitsTotal: dto.requested_units_total,
+    issuedUnitsTotal: dto.issued_units_total,
+  };
+}
+
+export function toRequestReport(dto: RequestReportDTO): RequestReport {
+  return {
+    summary: toRequestSummary(dto.summary),
+    items: dto.items.map(toRequestReportRow),
   };
 }

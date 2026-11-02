@@ -598,7 +598,77 @@ async function main() {
     console.log('SKIP  request workflow flow (set INT_ALLOW_WRITES=1 to run it)');
   }
 
-  // 8. mutation without the CSRF header
+  // 8. reports (Phase F6)
+  const requestReport = await call('GET', '/api/bff/reports/stock-requests?limit=5');
+  const reportSummaryKeys = requestReport.json?.data?.summary
+    ? Object.keys(requestReport.json.data.summary).sort().join(',')
+    : 'missing';
+  check(
+    'request report',
+    '200 + items[] + summary',
+    `${requestReport.status} summary=${reportSummaryKeys}`,
+    requestReport.status === 200 &&
+      Array.isArray(requestReport.json?.data?.items) &&
+      reportSummaryKeys ===
+        'approved_requests,cancelled_requests,issued_requests,issued_units_total,pending_requests,rejected_requests,requested_units_total,total_requests',
+  );
+
+  const invertedReport = await call(
+    'GET',
+    `/api/bff/reports/stock-requests?from=${encodeURIComponent('2026-10-29T00:00:00Z')}&to=${encodeURIComponent('2026-10-01T00:00:00Z')}`,
+  );
+  check(
+    'request report rejects an inverted range',
+    '400 + VALIDATION_ERROR',
+    `${invertedReport.status} ${invertedReport.text}`,
+    invertedReport.status === 400 && invertedReport.json?.error?.code === 'VALIDATION_ERROR',
+  );
+
+  const inventoryPage = await call('GET', '/reports/inventory');
+  check(
+    'inventory report page renders',
+    '200 + Inventory report',
+    `${inventoryPage.status}`,
+    inventoryPage.status === 200 && inventoryPage.text.includes('Inventory report'),
+  );
+
+  const requestReportPage = await call('GET', '/reports/requests');
+  check(
+    'request report page renders',
+    '200 + Request report',
+    `${requestReportPage.status}`,
+    requestReportPage.status === 200 && requestReportPage.text.includes('Request report'),
+  );
+
+  // The movement report redirects to the ledger with a 30-day window.
+  const movementReport = await call('GET', '/reports/movements');
+  check(
+    'movement report redirects to the ledger with a window',
+    '307 + /stock-movements?from=',
+    `${movementReport.status} ${movementReport.text.slice(0, 80)}`,
+    movementReport.status >= 300 &&
+      movementReport.status < 400 &&
+      movementReport.text.includes('stock-movements'),
+  );
+
+  // Deliberately uses a wrong current password: this must fail without changing anything.
+  const wrongPassword = await call('POST', '/api/bff/auth/change-password', {
+    headers: {
+      Origin: BASE,
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrf?.value ?? '',
+    },
+    body: { current_password: 'definitely-not-the-password', new_password: 'irrelevant-123' },
+  });
+  check(
+    'change password with a wrong current password is refused',
+    '401 + INVALID_CREDENTIALS',
+    `${wrongPassword.status} ${wrongPassword.text}`,
+    wrongPassword.status === 401 &&
+      wrongPassword.json?.error?.code === 'INVALID_CREDENTIALS',
+  );
+
+  // 9. mutation without the CSRF header
   const noCsrf = await call('POST', '/api/bff/auth/logout', { headers: { Origin: BASE } });
   check(
     'logout without X-CSRF-Token',

@@ -52,21 +52,21 @@ export const NAV_ITEMS: readonly NavItem[] = [
     href: '/reports/inventory',
     label: 'Inventory report',
     capability: 'report:read',
-    available: false,
+    available: true,
   },
   {
     key: 'report-movements',
     href: '/reports/movements',
     label: 'Movement report',
     capability: 'report:read',
-    available: false,
+    available: true,
   },
   {
     key: 'report-requests',
     href: '/reports/requests',
     label: 'Request report',
     capability: 'report:read',
-    available: false,
+    available: true,
   },
 ];
 

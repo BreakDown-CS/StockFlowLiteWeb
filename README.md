@@ -1,4 +1,4 @@
-"# StockFlow Lite — Web
+# StockFlow Lite — Web
 
 Next.js (App Router) frontend for **StockFlow Lite**, an inventory / stock-request demo backed by a
 Go + Fiber REST API and PostgreSQL.
@@ -84,6 +84,25 @@ src/
 tests/unit/       Vitest tests for the trust boundary
 ```
 
+## Testing
+
+| Command | What it covers | Requirements |
+|---|---|---|
+| `npm run typecheck` / `typecheck:tests` | Strict TypeScript on app code and on tests | — |
+| `npm run lint` | ESLint (flat config, `eslint-config-next`) | — |
+| `npm test` | 215 unit tests: envelope, error normalisation, session crypto, CSRF, validation, RBAC matrix, navigation, mappings, rate limiting, date ranges | — |
+| `npm run test:coverage` | Statement/branch/function coverage of the pure trust-boundary modules in `src/lib` | — |
+| `npm run smoke:auth` | 54 HTTP checks through the BFF: cookie flags, no token leakage, CSRF, 401 handling, CRUD, receipts, requests, reports | Running server + API, `INT_USER`/`INT_PASS` |
+| `npm run smoke:workflow` | 13 checks with **two** accounts: approve → shortage → issue → idempotent replay → reject | Running server + API, plus `INT_REVIEWER_USER`/`INT_REVIEWER_PASS` |
+| `npm run test:e2e` | Playwright (Chromium) against the real stack: redirect flow, login/logout, httpOnly cookie, product CRUD, filters, navigation | Running API, `E2E_USER`/`E2E_PASS`; first run needs `npx playwright install chromium` |
+
+`INT_ALLOW_WRITES=1` enables the data-mutating parts of `smoke:auth`.
+
+> **Repeated runs and login throttling.** Both the BFF and the API keep their login
+> limiters in memory. Running the suites several times in a row (especially E2E, which logs
+> in per test) will eventually trip them and produce `429` failures that are *not* product
+> bugs. Restart the API and the dev server before a full run.
+
 ## Phase status
 
 | Phase | Scope | Status |
@@ -94,5 +113,6 @@ tests/unit/       Vitest tests for the trust boundary
 | F3 | Products (list / detail / create / edit / deactivate) | ✅ done |
 | F4 | Stock receipts + movements ledger | ✅ done |
 | F5 | Stock requests + approve / reject / cancel / issue (idempotent) | ✅ done |
-| F6 | Reports (inventory / movements / requests) | ⬜ next |
-| F7 | Hardening: E2E suite, CSP, accessibility, docs | ⬜ |" 
+| F6 | Reports (inventory / movements / requests) | ✅ done |
+| F7 | Hardening: E2E suite, CSP, accessibility, docs | ✅ done |
+

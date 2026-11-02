@@ -4,8 +4,8 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import { queryKeys } from '@/lib/query/keys';
 
-import { fetchInventoryReport } from './api';
-import type { InventoryQuery } from './types';
+import { fetchInventoryReport, fetchRequestReport } from './api';
+import type { InventoryQuery, RequestReportQuery } from './types';
 
 /**
  * Inventory report query.
@@ -22,5 +22,13 @@ export function useInventoryReport(
     queryFn: ({ signal }) => fetchInventoryReport(query, signal),
     placeholderData: keepPreviousData,
     enabled: options.enabled ?? true,
+  });
+}
+
+export function useRequestReport(query: RequestReportQuery = {}) {
+  return useQuery({
+    queryKey: queryKeys.requestReport(query as Record<string, unknown>),
+    queryFn: ({ signal }) => fetchRequestReport(query, signal),
+    placeholderData: keepPreviousData,
   });
 }

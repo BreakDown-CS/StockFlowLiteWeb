@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { App, Button, Dropdown, Space, Tag, Typography } from 'antd';
 
@@ -37,6 +38,7 @@ export function UserMenu() {
           { key: 'username', label: `Signed in as ${user.username}`, disabled: true },
           { key: 'role', label: `Role: ${user.role}`, disabled: true },
           { type: 'divider' },
+          { key: 'password', label: <Link href="/account/password">Change password</Link> },
           { key: 'signout', label: 'Sign out' },
         ],
         onClick: ({ key }) => {
